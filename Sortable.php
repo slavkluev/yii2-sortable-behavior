@@ -115,6 +115,7 @@ class Sortable extends Behavior {
          * @var $owner ActiveRecord
          */
         $owner = $this->owner;
+        $owner->refresh();
 
         // remove from ordered list, but keep positions contiguous
         // by decrementing all positions which are greater
