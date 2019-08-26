@@ -42,6 +42,7 @@ class Sortable extends Behavior {
      *       - foreignKeyName => orderAttrName - limit ordering to ActiveRecords with the same foreign key value
      */
     public $orderAttribute = 'ord';
+    public $sortableClass = null;
 
     public function events()    {
         return [
@@ -107,7 +108,7 @@ class Sortable extends Behavior {
         $owner = $this->owner;
 
         // insert at the end of ordered list
-        $owner->setAttribute($orderAttr, $owner->find()->where($where)->count());
+        $owner->setAttribute($orderAttr, $this->getSortableClass()::find()->where($where)->count());
     }
 
     protected function removeFromOrder($orderAttr, $where)    {
@@ -119,7 +120,7 @@ class Sortable extends Behavior {
 
         // remove from ordered list, but keep positions contiguous
         // by decrementing all positions which are greater
-        $owner->UpdateAllCounters([$orderAttr => -1], [
+        $this->getSortableClass()::updateAllCounters([$orderAttr => -1], [
             'and',
             $where,
             "{{{$orderAttr}}} > :order"
@@ -201,7 +202,7 @@ class Sortable extends Behavior {
             if ($newPosition > $oldPosition)  {
                 // new position greater than old position,
                 // so all positions from old position + 1 up to and including new position should decrement
-                $owner->updateAllCounters([$orderAttr => -1],[
+                $this->getSortableClass()::updateAllCounters([$orderAttr => -1],[
                     'and',
                     $where,
                     ['between', $orderAttr, $oldPosition + 1, $newPosition]
@@ -210,7 +211,7 @@ class Sortable extends Behavior {
             else    {
                 // new position smaller than or equal to old position,
                 // so all positions from new position up to and including old position - 1 should increment
-                $owner->updateAllCounters([$orderAttr => 1],[
+                $this->getSortableClass()::updateAllCounters([$orderAttr => 1],[
                     'and',
                     $where,
                     ['between', $orderAttr, $newPosition, $oldPosition - 1]
@@ -222,5 +223,10 @@ class Sortable extends Behavior {
         } catch (Exception $e)  {
             $trans->rollBack();
         }
+    }
+
+    private function getSortableClass()
+    {
+        return $this->sortableClass ?? $this->owner;
     }
 }
